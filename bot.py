@@ -6,6 +6,44 @@ from flask import Flask, request
 from datetime import datetime, timedelta
 from collections import defaultdict
 
+# --- [1] إعداد السيرفر الوهمي لإرضاء Render ---
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "RLIX BOT IS ALIVE ✅"
+
+def run():
+    # Render يمرر رقم المنفذ تلقائياً عبر متغير البيئة PORT
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+
+# --- [2] إعدادات البوت الخاصة بك ---
+API_TOKEN = '7696920225:AAH65z3y6eJv5dmquqgHsrdQLR2ubfv5QoI'
+bot = telebot.TeleBot(API_TOKEN)
+FIXED_PSN_SECRET = 'TTJA4MHGR4UOA3SHBY5M255TJBAYVMCAXYNNW672OQAL42PTZVMXL4EUFPAUITBGTXLVEA5YRMBYTNM7GKLTPNN454HUL2YVCGC557I'
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add("🔑 الحصول على كود التحقق")
+    bot.send_message(message.chat.id, "👋 مرحباً بك في نظام رليكس على Render!", reply_markup=markup)
+
+@bot.message_handler(func=lambda m: m.text == "🔑 الحصول على كود التحقق")
+def get_otp(message):
+    totp = pyotp.TOTP(FIXED_PSN_SECRET.replace(" ", "").upper())
+    bot.send_message(message.chat.id, f"🔢 كود بلاستيشن الحالي: `{totp.now()}`", parse_mode='Markdown')
+
+# --- [3] تشغيل كل شيء معاً ---
+if __name__ == "__main__":
+    keep_alive()  # تشغيل السيرفر في الخلفية
+    print("RLIX BOT IS STARTING... 🚀")
+    bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    
 # ==========================================
 # --- [1] إعدادات الربط والاستقرار (Webhook) ---
 # ==========================================
